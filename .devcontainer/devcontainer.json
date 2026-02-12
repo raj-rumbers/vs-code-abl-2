@@ -1,0 +1,22 @@
+{
+  "image": "python:3.13",
+  "name": "neo Demo Dev Container",
+  "customizations": {
+        "vscode": {
+            "extensions": [
+                "GitHub.copilot",
+                "GitHub.copilot-chat"
+            ],
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash"
+            }
+        }
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "22"
+        }
+    },
+  "postCreateCommand": "bash .devcontainer/setup.sh"
+}
