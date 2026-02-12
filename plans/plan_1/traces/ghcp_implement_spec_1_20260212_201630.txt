@@ -262,3 +262,36 @@ The project has multiple versions of glob. Let me use the sync API with the olde
 
 Great! Now it compiles. Let me commit this progress:
 
+● Commit test runner
+  $ cd /workspaces/vs-code-abl-2 && git add -A && git commit -m "[neo] Add test runner
+  infrastructure and compile script (TASK-026 partial)"
+  └ 5 lines...
+
+Now let me try running the tests (TASK-026 continued):
+
+● Run tests
+  $ cd /workspaces/vs-code-abl-2 && npm test 2>&1
+  └ 21 lines...
+
+The tests need VS Code to run, but we're in a container environment without a display. Let me check if we can run unit tests without the full VS Code integration. For now, let me use the Makefile's test command to see what it does:
+
+● Run make test
+  $ cd /workspaces/vs-code-abl-2 && make test 2>&1
+  └ 18 lines...
+
+The issue is that we're running in a container without the necessary libraries for VS Code. For now, let me at least verify the tests compile correctly and run linting:
+
+● Run linting
+  $ cd /workspaces/vs-code-abl-2 && make lint 2>&1 | tail -20
+  └ 16 lines...
+
+Let me fix the linting warnings in the integration test file:
+
+● Edit src/test/suite/compileBuffer.integration.test.ts (+7 -5)
+
+● Run linting again
+  $ cd /workspaces/vs-code-abl-2 && make lint 2>&1 | tail -5
+  └ 5 lines...
+
+Excellent! Linting passes. Let me commit these fixes:
+

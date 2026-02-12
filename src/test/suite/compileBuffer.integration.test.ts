@@ -3,25 +3,27 @@
  * Tests the complete flow from command invocation to project selection
  */
 
-import * as assert from 'assert';
-import * as vscode from 'vscode';
-import * as path from 'path';
+// import * as assert from 'assert';
+// import * as vscode from 'vscode';
+// import * as path from 'path';
 
 suite('CompileBuffer Integration Tests', () => {
     
     // Note: These tests require a real VS Code workspace with projects
     // They may need to be run manually or with a test workspace setup
     
-    // Helper to create test workspace structure
+    /* Helper to create test workspace structure
     async function createTestWorkspace() {
         // This would set up a temporary workspace with multiple projects
         // Implementation depends on test infrastructure
     }
+    */
     
-    // Helper to clean up test workspace
+    /* Helper to clean up test workspace
     async function cleanupTestWorkspace() {
         // Clean up after tests
     }
+    */
     
     suite('Single Project Workspace', () => {
         
