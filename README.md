@@ -128,6 +128,100 @@ V11 Profile inherits from the default profile, so graphicalMode will be set to t
 V12.2 GUI Profile doesn't inherit from the default profile, so it won't have any DB connection.
 When opening a project, VSCode will check for `.vscode/profile.json`. If this file is present, then this profile will be loaded. Otherwise, the default profile will be used. It is recommended to add this file to the SCM ignore list.
 
+## Working with Multiple Projects
+
+The OpenEdge ABL extension supports working with multiple projects in a single VS Code workspace. Each project should have its own `openedge-project.json` configuration file defining the project's settings, PROPATH, database connections, and build configuration.
+
+### Automatic Project Detection
+
+When you execute project-dependent commands (Check Syntax, Preprocess File, Generate Listing, etc.), the extension automatically determines which project to use based on the file you're working with:
+
+**Priority-based Selection:**
+1. **Auto-detection**: The extension analyzes the file path and automatically selects the project whose root directory contains the file
+2. **Most Specific Match**: If multiple projects match (nested projects), the most specific (deepest) project is selected
+3. **Default Project**: If auto-detection cannot determine the project, the extension uses your configured default project (if set)
+4. **Manual Selection**: If none of the above apply, you'll be prompted to select a project manually
+
+### Example Scenarios
+
+#### Scenario 1: File in Known Project
+```
+Workspace:
+  /projectA/
+    openedge-project.json
+    src/main.p         ← You open this file
+  /projectB/
+    openedge-project.json
+    src/test.p
+
+Action: Execute "ABL: Check Syntax"
+Result: ProjectA is automatically selected (no prompt)
+```
+
+#### Scenario 2: Default Project Override
+```
+Workspace:
+  /projectA/ (set as default)
+  /projectB/
+    src/test.p         ← You open this file from ProjectB
+
+Action: Execute "ABL: Check Syntax"
+Result: ProjectB is automatically selected (overrides default)
+```
+
+#### Scenario 3: Nested Projects
+```
+Workspace:
+  /parent/
+    openedge-project.json
+    /submodule/
+      openedge-project.json
+      src/test.p       ← You open this file
+
+Action: Execute "ABL: Check Syntax"
+Result: Submodule project is automatically selected (most specific match)
+```
+
+#### Scenario 4: File Outside Projects
+```
+Workspace:
+  /projectA/
+  /projectB/
+  /external/
+    standalone.p       ← You open this file
+
+Action: Execute "ABL: Check Syntax"
+Result: Project selection dialog appears (manual choice required)
+```
+
+### Setting a Default Project
+
+To set a default project for your workspace:
+
+1. Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+2. Execute: "ABL: Set Default Project"
+3. Select your preferred default project
+
+The default project is used as a fallback when:
+- File is outside all project directories
+- Auto-detection cannot determine the appropriate project
+
+**Note**: The default project will NOT be used if the file clearly belongs to a different project. Auto-detection always takes precedence.
+
+### Troubleshooting
+
+**Q: Why is the wrong project being selected?**
+A: Check the Output panel (View → Output → OpenEdge ABL) for project resolution messages. The extension logs which project was selected and why.
+
+**Q: I want to manually choose a different project**
+A: Open a file outside your project directories, and you'll be prompted to select a project. Alternatively, consider adjusting your workspace structure or default project setting.
+
+**Q: How do I see which project is being used?**
+A: Enable the Output panel and look for messages like:
+- "Auto-detected project 'ProjectA' for file: /workspace/projectA/src/test.p"
+- "Using default project 'ProjectB' (no file match found)"
+- "Could not determine project for file - manual selection required"
+
 ## Debugger
 
 You can use the debugger to debug a remote ABL session (assuming it is started with -debugReady) or PASOE instance (assuming that oedebugger webapp is deployed).

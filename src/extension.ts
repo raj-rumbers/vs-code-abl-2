@@ -14,6 +14,7 @@ import { ClassBrowserProvider } from './ClassBrowser';
 import { openInAB, openInProcEditor, runGUI } from './shared/ablRun';
 import { FileInfo, ProjectInfo } from './shared/FileInfo';
 import { loadConfigFile, OpenEdgeConfig, OpenEdgeMainConfig, OpenEdgeProjectConfig, ProfileConfig } from './shared/openEdgeConfigFile';
+import { resolveProjectWithFallback } from './shared/projectResolver';
 
 let client: LanguageClient;
 
@@ -364,31 +365,24 @@ function switchProfile(project: OpenEdgeProjectConfig): void {
     quickPick.show();
 }
 
+/**
+ * Compiles (checks syntax of) the current buffer.
+ * Uses intelligent project resolution to automatically select the appropriate project.
+ */
 function compileBuffer() {
-    if (vscode.window.activeTextEditor == undefined)
+    // Validate active editor exists
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
         return;
-
-    if (projects.length == 1) {
-        compileBufferInProject(projects[0], vscode.window.activeTextEditor.document.uri.toString(), vscode.window.activeTextEditor.document.getText());
-    } else {
-        const defPrj = getProjectByName(defaultProjectName);
-        if (defPrj) {
-            compileBufferInProject(defPrj, vscode.window.activeTextEditor.document.uri.toString(), vscode.window.activeTextEditor.document.getText());
-        } else {
-            const list = projects.map(project => ({ label: project.name, description: project.rootDir }));
-            list.sort((a, b) => a.label.localeCompare(b.label));
-
-            const quickPick = vscode.window.createQuickPick();
-            quickPick.canSelectMany = false;
-            quickPick.title = "Choose project to compile buffer:";
-            quickPick.items = list;
-            quickPick.onDidChangeSelection(args => {
-                quickPick.hide();
-                compileBufferInProject(getProjectByName(args[0].label), vscode.window.activeTextEditor.document.uri.toString(), vscode.window.activeTextEditor.document.getText());
-            });
-            quickPick.show();
-        }
     }
+
+    const fileUri = editor.document.uri.toString();
+    const fileContent = editor.document.getText();
+
+    // Use the standard helper function for consistent project selection
+    selectProjectForCurrentFile(editor, (project) => {
+        compileBufferInProject(project, fileUri, fileContent);
+    });
 }
 
 function compileBufferInProject(project: OpenEdgeProjectConfig, bufferUri: string, buffer: string) {
@@ -399,6 +393,80 @@ function compileBufferInProject(project: OpenEdgeProjectConfig, bufferUri: strin
         vscode.window.showInformationMessage("Syntax is correct");
       }
     });
+}
+
+/**
+ * Selects the appropriate project for the current file using intelligent resolution.
+ * If project cannot be determined automatically, shows QuickPick dialog.
+ * 
+ * @param editor - The active text editor
+ * @param callback - Function to call with the selected project
+ * @returns void
+ * 
+ * @example
+ * selectProjectForCurrentFile(editor, (project) => {
+ *   // Do something with the selected project
+ *   preprocessFileInProject(project, fileUri);
+ * });
+ */
+function selectProjectForCurrentFile(
+    editor: vscode.TextEditor,
+    callback: (project: OpenEdgeProjectConfig) => void
+): void {
+    const filePath = editor.document.uri.fsPath;
+    
+    // Attempt intelligent project resolution
+    const selectedProject = resolveProjectWithFallback(
+        filePath,
+        projects,
+        defaultProjectName,
+        getProjectByName
+    );
+    
+    if (selectedProject) {
+        // Project resolved - invoke callback
+        callback(selectedProject);
+    } else {
+        // Could not auto-resolve - show manual selection dialog
+        showProjectSelectionDialogWithCallback(callback);
+    }
+}
+
+/**
+ * Shows project selection dialog and invokes callback with selected project.
+ * 
+ * @param callback - Function to call with the selected project
+ */
+function showProjectSelectionDialogWithCallback(
+    callback: (project: OpenEdgeProjectConfig) => void
+): void {
+    const projectList = projects.map(project => ({ 
+        label: project.name, 
+        description: project.rootDir 
+    }));
+    projectList.sort((a, b) => a.label.localeCompare(b.label));
+
+    const quickPick = vscode.window.createQuickPick();
+    quickPick.canSelectMany = false;
+    quickPick.title = "Choose project:";
+    quickPick.placeholder = "Select a project (file location could not be determined automatically)";
+    quickPick.items = projectList;
+    
+    quickPick.onDidChangeSelection(selectedItems => {
+        if (selectedItems.length > 0) {
+            quickPick.hide();
+            const project = getProjectByName(selectedItems[0].label);
+            if (project) {
+                callback(project);
+            }
+        }
+    });
+    
+    quickPick.onDidHide(() => {
+        quickPick.dispose();
+    });
+    
+    quickPick.show();
 }
 
 function debugListingLine() {
@@ -427,111 +495,146 @@ function dumpFileStatus() {
     client.sendNotification("proparse/dumpFileStatus", { fileUri: vscode.window.activeTextEditor.document.uri.toString() });
 }
 
+/**
+ * Preprocesses the current ABL file and displays the preprocessed output.
+ * Uses intelligent project selection to determine which project context to use.
+ * 
+ * @returns void
+ */
 function preprocessFile() {
-    if (vscode.window.activeTextEditor == undefined)
-        return;
-    const cfg = getProject(vscode.window.activeTextEditor.document.uri.fsPath);
-    if (!cfg) {
-        vscode.window.showInformationMessage("Current buffer doesn't belong to any OpenEdge project");
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
         return;
     }
-
-    client.sendRequest("proparse/preprocess", { fileUri: vscode.window.activeTextEditor.document.uri.toString() }).then(result => {
-      const anyValue = result as any;
-      if (anyValue.fileName === "") {
-        vscode.window.showErrorMessage("Error during preprocess: " + anyValue.message);
-      } else {
-        vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
-      }
-    })
-}
-
-function generateListing() {
-    if (vscode.window.activeTextEditor == undefined)
-        return;
-    const cfg = getProject(vscode.window.activeTextEditor.document.uri.fsPath);
-    if (!cfg) {
-        vscode.window.showInformationMessage("Current buffer doesn't belong to any OpenEdge project");
-        return;
-    }
-
-    client.sendRequest("proparse/listing", { fileUri: vscode.window.activeTextEditor.document.uri.toString() }).then(result => {
-      const anyValue = result as any;
-      if (anyValue.fileName === "") {
-        vscode.window.showErrorMessage("Error during listing generation: " + anyValue.message);
-      } else {
-        vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
-      }
-    })
-}
-
-function generateDebugListing() {
-    if (vscode.window.activeTextEditor == undefined)
-        return;
-    const cfg = getProject(vscode.window.activeTextEditor.document.uri.fsPath);
-    if (!cfg) {
-        vscode.window.showInformationMessage("Current buffer doesn't belong to any OpenEdge project");
-        return;
-    }
-
-    client.sendRequest("proparse/debugListing", { fileUri: vscode.window.activeTextEditor.document.uri.toString() }).then(result => {
-      const anyValue = result as any;
-      if (anyValue.fileName === "") {
-        vscode.window.showErrorMessage("Error during debug listing generation: " + anyValue.message);
-      } else {
-        vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
-      }
-    })
-}
-
-function generateXref() {
-    if (vscode.window.activeTextEditor == undefined)
-        return;
-    const cfg = getProject(vscode.window.activeTextEditor.document.uri.fsPath);
-    if (!cfg) {
-        vscode.window.showInformationMessage("Current buffer doesn't belong to any OpenEdge project");
-        return;
-    }
-    client.sendRequest("proparse/xref", { fileUri: vscode.window.activeTextEditor.document.uri.toString() }).then(result => {
-      const anyValue = result as any;
-      if (anyValue.fileName === "") {
-        vscode.window.showErrorMessage("Error during XREF generation: " + anyValue.message);
-      } else {
-        vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
-      }
-    })
-}
-
-function generateXrefAndJumpToCurrentLine() {
-    if (vscode.window.activeTextEditor == undefined)
-        return;
-    const cfg = getProject(vscode.window.activeTextEditor.document.uri.fsPath);
-    if (!cfg) {
-        vscode.window.showInformationMessage("Current buffer doesn't belong to any OpenEdge project");
-        return;
-    }
-
-    const currentEditor = vscode.window.activeTextEditor;
-    const currentLine = currentEditor.selection.active.line + 1; // Convert to 1-based line number
-    const currentFile = currentEditor.document.uri.fsPath;
     
-    client.sendRequest("proparse/xref", { fileUri: vscode.window.activeTextEditor.document.uri.toString() }).then(result => {
-      const anyValue = result as any;
-      if (anyValue.fileName === "") {
-        vscode.window.showErrorMessage("Error during XREF generation: " + anyValue.message);
-      } else {
-        vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName)).then(async editor => {
-            const result = await getXrefLineSelectionForSourceLine(currentFile, anyValue.fileName, currentLine);
-            if (result === null) {
-                vscode.window.showWarningMessage("XREF line mapping failed");
-                return;
+    const fileUri = editor.document.uri.toString();
+    
+    // Use intelligent project selection with fallback to manual selection
+    selectProjectForCurrentFile(editor, (project) => {
+        client.sendRequest("proparse/preprocess", { fileUri: fileUri }).then(result => {
+            const anyValue = result as any;
+            if (anyValue.fileName === "") {
+                vscode.window.showErrorMessage("Error during preprocess: " + anyValue.message);
+            } else {
+                vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
             }
-            const startPosition = new vscode.Position(result.start, 0);
-            const endPosition = new vscode.Position(result.start + result.count - 1, 1000);
-            editor.selection = new vscode.Selection(startPosition, endPosition);
-            editor.revealRange(new vscode.Range(startPosition, endPosition), vscode.TextEditorRevealType.InCenter);
         });
-      }
+    });
+}
+
+/**
+ * Generates a listing file for the current ABL file.
+ * Uses intelligent project selection to determine which project context to use.
+ * 
+ * @returns void
+ */
+function generateListing() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        return;
+    }
+    
+    const fileUri = editor.document.uri.toString();
+    
+    selectProjectForCurrentFile(editor, (project) => {
+        client.sendRequest("proparse/listing", { fileUri: fileUri }).then(result => {
+            const anyValue = result as any;
+            if (anyValue.fileName === "") {
+                vscode.window.showErrorMessage("Error during listing generation: " + anyValue.message);
+            } else {
+                vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
+            }
+        });
+    });
+}
+
+/**
+ * Generates a debug listing file for the current ABL file.
+ * Uses intelligent project selection to determine which project context to use.
+ * 
+ * @returns void
+ */
+function generateDebugListing() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        return;
+    }
+    
+    const fileUri = editor.document.uri.toString();
+    
+    selectProjectForCurrentFile(editor, (project) => {
+        client.sendRequest("proparse/debugListing", { fileUri: fileUri }).then(result => {
+            const anyValue = result as any;
+            if (anyValue.fileName === "") {
+                vscode.window.showErrorMessage("Error during debug listing generation: " + anyValue.message);
+            } else {
+                vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
+            }
+        });
+    });
+}
+
+/**
+ * Generates an XREF file for the current ABL file.
+ * Uses intelligent project selection to determine which project context to use.
+ * 
+ * @returns void
+ */
+function generateXref() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        return;
+    }
+    
+    const fileUri = editor.document.uri.toString();
+    
+    selectProjectForCurrentFile(editor, (project) => {
+        client.sendRequest("proparse/xref", { fileUri: fileUri }).then(result => {
+            const anyValue = result as any;
+            if (anyValue.fileName === "") {
+                vscode.window.showErrorMessage("Error during XREF generation: " + anyValue.message);
+            } else {
+                vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
+            }
+        });
+    });
+}
+
+/**
+ * Generates an XREF file for the current ABL file and jumps to the current line in the XREF output.
+ * Uses intelligent project selection to determine which project context to use.
+ * 
+ * @returns void
+ */
+function generateXrefAndJumpToCurrentLine() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        return;
+    }
+    
+    const fileUri = editor.document.uri.toString();
+    const currentLine = editor.selection.active.line + 1; // Convert to 1-based line number
+    const currentFile = editor.document.uri.fsPath;
+    
+    selectProjectForCurrentFile(editor, (project) => {
+        client.sendRequest("proparse/xref", { fileUri: fileUri }).then(result => {
+            const anyValue = result as any;
+            if (anyValue.fileName === "") {
+                vscode.window.showErrorMessage("Error during XREF generation: " + anyValue.message);
+            } else {
+                vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName)).then(async editor => {
+                    const result = await getXrefLineSelectionForSourceLine(currentFile, anyValue.fileName, currentLine);
+                    if (result === null) {
+                        vscode.window.showWarningMessage("XREF line mapping failed");
+                        return;
+                    }
+                    const startPosition = new vscode.Position(result.start, 0);
+                    const endPosition = new vscode.Position(result.start + result.count - 1, 1000);
+                    editor.selection = new vscode.Selection(startPosition, endPosition);
+                    editor.revealRange(new vscode.Range(startPosition, endPosition), vscode.TextEditorRevealType.InCenter);
+                });
+            }
+        });
     });
 }
 

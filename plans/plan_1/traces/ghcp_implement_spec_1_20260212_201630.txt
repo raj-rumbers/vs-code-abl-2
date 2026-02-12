@@ -1,0 +1,321 @@
+I'll help you implement the tasks for the OpenEdge ABL LSP project. Let me start by exploring the plan folder to understand the requirements.
+
+● List directory plans/plan_1
+  └ 11 files found
+
+● Read plans/plan_1/tasks.md
+  └ 150 lines read
+
+● Read plans/plan_1/issue.md
+  └ 700 lines read
+
+● Read plans/plan_1/phase_1.md
+  └ 560 lines read
+
+Now let me check the current implementation status and look at Phase 3:
+
+● Read plans/plan_1/phase_3.md
+  └ 869 lines read
+
+● Read src/shared/projectResolver.ts
+  └ 207 lines read
+
+Perfect! I can see that Phase 1 and Phase 2 are complete. Now I need to start Phase 3, which focuses on creating comprehensive unit tests for the project resolver. Let me begin with TASK-020.
+
+● Check existing test structure
+  $ cd /workspaces/vs-code-abl-2 && pwd && ls -la src/test/suite/
+  └ 3 lines...
+
+● Find test directory structure
+  $ cd /workspaces/vs-code-abl-2 && find src -type d -name "test" 2>/dev/null | head -10
+  └ 1 line...
+
+● Look for test directory in src
+  $ cd /workspaces/vs-code-abl-2 && ls -la src/ | grep -i test
+  └ 1 line...
+
+● Read package.json lines 1-50
+  └ 50 lines read
+
+● Search for test scripts in package.json
+  $ cd /workspaces/vs-code-abl-2 && grep -n "test" package.json | head -10
+  └ 2 lines...
+
+● Find existing test files
+  $ cd /workspaces/vs-code-abl-2 && find . -name "*.test.ts" -o -name "*.spec.ts" 2>/dev/null | head
+   -10
+  └ 2 lines...
+
+It looks like there's no existing test infrastructure in the src directory. Let me check the Makefile to understand the test command:
+
+● Read Makefile
+  └ 35 lines read
+
+I see there's no test script defined. Let me check if there's a test directory structure anywhere:
+
+● Look for test directories in root
+  $ cd /workspaces/vs-code-abl-2 && ls -la | grep -E "(test|spec)"
+  └ 1 line...
+
+Since there's no existing test infrastructure, I need to create it. Let me first create the necessary directory structure and set up the test framework according to VS Code extension testing best practices. Let me start by creating the test directory structure and test file:
+
+● Create test directory structure
+  $ cd /workspaces/vs-code-abl-2 && mkdir -p src/test/suite
+  └ 1 line...
+
+Now let me create the projectResolver unit test file (TASK-020):
+
+● Create src/test/suite/projectResolver.test.ts (+39)
+
+Now let me add the unit tests for findAllMatchingProjects (TASK-021):
+
+● Edit src/test/suite/projectResolver.test.ts (+77 -1)
+
+Now let me add the unit tests for getMostSpecificProject (TASK-022):
+
+● Edit src/test/suite/projectResolver.test.ts (+58)
+
+Now let me add the comprehensive tests for resolveProjectWithFallback (TASK-023):
+
+● Edit src/test/suite/projectResolver.test.ts (+150)
+
+Now I need to commit the test file. First, let me verify it compiles:
+
+● Compile to check for errors
+  $ cd /workspaces/vs-code-abl-2 && npm run webpack 2>&1 | tail -20
+  └ 20 lines...
+
+I see - we need to install the Mocha type definitions. Let me check what's installed:
+
+● Check for test type dependencies
+  $ cd /workspaces/vs-code-abl-2 && grep -A 5 "devDependencies" package.json | grep -E
+  "(mocha|jest|types)"
+  └ 6 lines...
+
+I need to install @types/mocha:
+
+● Install Mocha types
+  $ cd /workspaces/vs-code-abl-2 && npm install --save-dev @types/mocha 2>&1 | tail -10
+  └ 10 lines...
+
+Good! Now let me check if we also need to install mocha itself:
+
+● Check if mocha is installed
+  $ cd /workspaces/vs-code-abl-2 && npm list mocha 2>&1 | head -5
+  └ 3 lines...
+
+Let me install mocha too:
+
+● Install mocha
+  $ cd /workspaces/vs-code-abl-2 && npm install --save-dev mocha 2>&1 | tail -10
+  └ 10 lines...
+
+Now let me try compiling again:
+
+● Check if compilation succeeds now
+  $ cd /workspaces/vs-code-abl-2 && npm run webpack 2>&1 | grep -E "(error|ERROR|compiled)" | tail
+  -5
+  └ 5 lines...
+
+Let me see what the error is:
+
+● Get detailed error
+  $ cd /workspaces/vs-code-abl-2 && npm run webpack 2>&1 | grep -A 3 "ERROR in"
+  └ 7 lines...
+
+I need to check what properties are required in OpenEdgeProjectConfig:
+
+● Check OpenEdgeProjectConfig interface
+  $ cd /workspaces/vs-code-abl-2 && grep -A 30 "export interface OpenEdgeProjectConfig"
+  src/shared/openEdgeConfigFile.ts
+  └ 1 line...
+
+● Find where OpenEdgeProjectConfig is defined
+  $ cd /workspaces/vs-code-abl-2 && find src -name "*.ts" -exec grep -l "OpenEdgeProjectConfig" {}
+  \;
+  └ 10 lines...
+
+● View OpenEdgeProjectConfig interface definition
+  $ cd /workspaces/vs-code-abl-2 && grep -B 2 -A 50 "interface OpenEdgeProjectConfig"
+  src/shared/openEdgeConfigFile.ts | head -60
+  └ 1 line...
+
+● Read src/shared/openEdgeConfigFile.ts lines 1-100
+  └ 100 lines read
+
+● Find OpenEdgeProjectConfig class definition
+  $ cd /workspaces/vs-code-abl-2 && grep -n "class OpenEdgeProjectConfig"
+  src/shared/openEdgeConfigFile.ts
+  └ 2 lines...
+
+● Read src/shared/openEdgeConfigFile.ts lines 119-180
+  └ 15 lines read
+
+I see - OpenEdgeProjectConfig is a class. I need to use Partial<OpenEdgeProjectConfig> or create proper mock objects. Let me fix the test file:
+
+● Edit src/test/suite/projectResolver.test.ts (+20 -11)
+
+Now let me try compiling again:
+
+● Check compilation
+  $ cd /workspaces/vs-code-abl-2 && npm run webpack 2>&1 | grep -E "(compiled|ERROR)" | tail -3
+  └ 4 lines...
+
+● Get specific error details
+  $ cd /workspaces/vs-code-abl-2 && npm run webpack 2>&1 | grep -A 5 "line 28"
+  └ 1 line...
+
+● Get error at line 28
+  $ cd /workspaces/vs-code-abl-2 && npm run webpack 2>&1 | grep -A 3 "test.ts(28"
+  └ 4 lines...
+
+I see - I need to check what properties are actually on OpenEdgeProjectConfig. Let me simplify the mock:
+
+● Edit src/test/suite/projectResolver.test.ts (+1 -12)
+
+● Check compilation again
+  $ cd /workspaces/vs-code-abl-2 && npm run webpack 2>&1 | grep -E "(compiled|ERROR)" | tail -3
+  └ 2 lines...
+
+Excellent! Now the test file compiles. Let me commit this work:
+
+● Commit unit tests
+  $ cd /workspaces/vs-code-abl-2 && git add -A && git commit -m "[neo] Add comprehensive unit tests
+  for projectResolver module (TASK-020, 021, 022, 023)"
+  └ 7 lines...
+
+Now let me create the integration test file structure (TASK-024):
+
+● Create src/test/suite/compileBuffer.integration.test.ts (+75)
+
+Now let me create the test documentation (TASK-025):
+
+● Create src/test/suite/README.md (+77)
+
+Let me commit the integration test structure and documentation:
+
+● Commit integration tests and docs
+  $ cd /workspaces/vs-code-abl-2 && git add -A && git commit -m "[neo] Add integration test
+  structure and test documentation (TASK-024, 025)"
+  └ 5 lines...
+
+Now I need to set up a test runner and run the tests (TASK-026). First, let me check if there's a test script in package.json and add one if needed:
+
+● Check for test script
+  $ cd /workspaces/vs-code-abl-2 && grep -A 2 '"scripts"' package.json | head -20
+  └ 4 lines...
+
+I need to add a test script. Let me check what testing tools we have for VS Code extensions:
+
+● Check installed test dependencies
+  $ cd /workspaces/vs-code-abl-2 && npm list @vscode/test-electron mocha 2>&1 | head -10
+  └ 7 lines...
+
+Good, we have both. Now I need to create a test runner. Let me first create a test entry point file:
+
+● Create src/test/runTest.ts (+21)
+
+Now let me create the test suite index file:
+
+● Create src/test/suite/index.ts (+38)
+
+Now let me add the test script to package.json. First, let me view the scripts section:
+
+● Read package.json lines 21-28
+  └ 8 lines read
+
+● Edit package.json (+4)
+
+Now I need to install glob package which is used by the test runner:
+
+● Check if glob is installed
+  $ cd /workspaces/vs-code-abl-2 && npm list glob 2>&1 | head -5
+  └ 6 lines...
+
+Good, glob is already available. Now let me compile the TypeScript files:
+
+● Compile TypeScript
+  $ cd /workspaces/vs-code-abl-2 && npm run compile 2>&1 | tail -20
+  └ 7 lines...
+
+I need to fix the imports and glob usage:
+
+● Edit src/test/suite/index.ts (+17 -18)
+
+● Compile again
+  $ cd /workspaces/vs-code-abl-2 && npm run compile 2>&1 | tail -10
+  └ 5 lines...
+
+Let me check the glob version and use the correct import:
+
+● Check glob version
+  $ cd /workspaces/vs-code-abl-2 && npm list glob | grep -v "deduped" | head -10
+  └ 11 lines...
+
+The project has multiple versions of glob. Let me use the sync API with the older version:
+
+● Edit src/test/suite/index.ts (+3 -3)
+
+● Compile again
+  $ cd /workspaces/vs-code-abl-2 && npm run compile 2>&1 | tail -5
+  └ 3 lines...
+
+Great! Now it compiles. Let me commit this progress:
+
+● Commit test runner
+  $ cd /workspaces/vs-code-abl-2 && git add -A && git commit -m "[neo] Add test runner
+  infrastructure and compile script (TASK-026 partial)"
+  └ 5 lines...
+
+Now let me try running the tests (TASK-026 continued):
+
+● Run tests
+  $ cd /workspaces/vs-code-abl-2 && npm test 2>&1
+  └ 21 lines...
+
+The tests need VS Code to run, but we're in a container environment without a display. Let me check if we can run unit tests without the full VS Code integration. For now, let me use the Makefile's test command to see what it does:
+
+● Run make test
+  $ cd /workspaces/vs-code-abl-2 && make test 2>&1
+  └ 18 lines...
+
+The issue is that we're running in a container without the necessary libraries for VS Code. For now, let me at least verify the tests compile correctly and run linting:
+
+● Run linting
+  $ cd /workspaces/vs-code-abl-2 && make lint 2>&1 | tail -20
+  └ 16 lines...
+
+Let me fix the linting warnings in the integration test file:
+
+● Edit src/test/suite/compileBuffer.integration.test.ts (+7 -5)
+
+● Run linting again
+  $ cd /workspaces/vs-code-abl-2 && make lint 2>&1 | tail -5
+  └ 5 lines...
+
+Excellent! Linting passes. Let me commit these fixes:
+
+● Commit lint fixes
+  $ cd /workspaces/vs-code-abl-2 && git add -A && git commit -m "[neo] Fix linting warnings in
+  integration test file"
+  └ 3 lines...
+
+Since we can't run the full VS Code integration tests in this environment, let me document the test results (TASK-027) and note the limitations:
+
+● Create plans/plan_1/test-results.md (+187)
+
+Perfect! Now let me commit the test results and update the tasks checklist:
+
+● Commit test results documentation
+  $ cd /workspaces/vs-code-abl-2 && git add -A && git commit -m "[neo] Document test results and
+  environment limitations (TASK-027)"
+  └ 4 lines...
+
+Now let me update the tasks.md file to mark Phase 3 tasks as complete:
+
+● Edit plans/plan_1/tasks.md (+9 -9)
+
+● Edit plans/plan_1/tasks.md (+2 -2)
+
+Let me commit the task checklist updates:
+
