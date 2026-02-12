@@ -495,6 +495,12 @@ function dumpFileStatus() {
     client.sendNotification("proparse/dumpFileStatus", { fileUri: vscode.window.activeTextEditor.document.uri.toString() });
 }
 
+/**
+ * Preprocesses the current ABL file and displays the preprocessed output.
+ * Uses intelligent project selection to determine which project context to use.
+ * 
+ * @returns void
+ */
 function preprocessFile() {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -516,6 +522,12 @@ function preprocessFile() {
     });
 }
 
+/**
+ * Generates a listing file for the current ABL file.
+ * Uses intelligent project selection to determine which project context to use.
+ * 
+ * @returns void
+ */
 function generateListing() {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -536,6 +548,12 @@ function generateListing() {
     });
 }
 
+/**
+ * Generates a debug listing file for the current ABL file.
+ * Uses intelligent project selection to determine which project context to use.
+ * 
+ * @returns void
+ */
 function generateDebugListing() {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -556,6 +574,12 @@ function generateDebugListing() {
     });
 }
 
+/**
+ * Generates an XREF file for the current ABL file.
+ * Uses intelligent project selection to determine which project context to use.
+ * 
+ * @returns void
+ */
 function generateXref() {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -576,6 +600,12 @@ function generateXref() {
     });
 }
 
+/**
+ * Generates an XREF file for the current ABL file and jumps to the current line in the XREF output.
+ * Uses intelligent project selection to determine which project context to use.
+ * 
+ * @returns void
+ */
 function generateXrefAndJumpToCurrentLine() {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
