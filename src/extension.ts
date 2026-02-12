@@ -371,42 +371,37 @@ function switchProfile(project: OpenEdgeProjectConfig): void {
  */
 function compileBuffer() {
     // Validate active editor exists
-    if (vscode.window.activeTextEditor == undefined) {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
         return;
     }
 
-    // Extract file information for project resolution
-    const editor = vscode.window.activeTextEditor;
-    const filePath = editor.document.uri.fsPath;
     const fileUri = editor.document.uri.toString();
     const fileContent = editor.document.getText();
 
-    // Resolve project using priority-based algorithm:
-    // 1. Auto-detect from file path (single match or most specific nested project)
-    // 2. Fall back to default project (if configured and no auto-detection)
-    // 3. Return null if manual selection needed
-    const selectedProject = resolveProjectWithFallback(
-        filePath,
-        projects,
-        defaultProjectName,
-        getProjectByName
-    );
-    
-    if (selectedProject) {
-        // Project successfully resolved (auto or default) - proceed with compilation
-        compileBufferInProject(selectedProject, fileUri, fileContent);
-    } else {
-        // Could not auto-resolve - prompt user to manually select project
-        showProjectSelectionDialog(fileUri, fileContent);
-    }
+    // Use the standard helper function for consistent project selection
+    selectProjectForCurrentFile(editor, (project) => {
+        compileBufferInProject(project, fileUri, fileContent);
+    });
+}
+
+function compileBufferInProject(project: OpenEdgeProjectConfig, bufferUri: string, buffer: string) {
+    client.sendRequest<any>("proparse/compileBuffer", { projectUri: project.uri.toString(), bufferUri: bufferUri, buffer: buffer }).then(result => {
+      if (result.success === false) {
+        vscode.window.showErrorMessage("Compile buffer failed");
+      } else {
+        vscode.window.showInformationMessage("Syntax is correct");
+      }
+    });
 }
 
 /**
- * Shows a quick-pick dialog for manual project selection.
+ * Shows a quick-pick dialog for manual project selection (for compileBuffer specifically).
  * Called when automatic project detection cannot determine the appropriate project.
  * 
  * @param fileUri - URI of the file to compile
  * @param fileContent - Content of the file to compile
+ * @deprecated Use selectProjectForCurrentFile with callback instead
  */
 function showProjectSelectionDialog(fileUri: string, fileContent: string) {
     // Create sorted list of projects for display
@@ -440,16 +435,6 @@ function showProjectSelectionDialog(fileUri: string, fileContent: string) {
     });
     
     quickPick.show();
-}
-
-function compileBufferInProject(project: OpenEdgeProjectConfig, bufferUri: string, buffer: string) {
-    client.sendRequest<any>("proparse/compileBuffer", { projectUri: project.uri.toString(), bufferUri: bufferUri, buffer: buffer }).then(result => {
-      if (result.success === false) {
-        vscode.window.showErrorMessage("Compile buffer failed");
-      } else {
-        vscode.window.showInformationMessage("Syntax is correct");
-      }
-    });
 }
 
 /**
