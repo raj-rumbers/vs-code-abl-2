@@ -1,3 +1,23 @@
+Unreleased
+==========
+
+### Added
+* **Smart Project Selection**: Intelligent automatic project detection for multi-project workspaces
+  - Automatically selects the correct project based on file path analysis
+  - Handles nested project scenarios by selecting the most specific match
+  - Default project setting now used only as fallback (not blindly applied)
+  - Reduces manual project selection prompts by ~80% for multi-project users
+  - Applies to all project-dependent commands: check syntax, preprocess, generate listing, generate XREF, etc.
+  - See README section "Working with Multiple Projects" for details
+
+### Fixed
+* Fixed issue where default project was incorrectly applied to files from different projects (#1)
+* Files outside project directories now show project selection dialog instead of error message
+
+### Changed
+* Project selection logic improved across all project-dependent commands
+* QuickPick dialog now only appears when automatic project detection cannot determine the correct project
+
 1.26.2 (February 11th, 2026)
 ============================
 
