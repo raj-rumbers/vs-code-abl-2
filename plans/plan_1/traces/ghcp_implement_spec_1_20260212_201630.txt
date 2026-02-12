@@ -179,3 +179,18 @@ I see - I need to check what properties are actually on OpenEdgeProjectConfig. L
 
 Excellent! Now the test file compiles. Let me commit this work:
 
+● Commit unit tests
+  $ cd /workspaces/vs-code-abl-2 && git add -A && git commit -m "[neo] Add comprehensive unit tests
+  for projectResolver module (TASK-020, 021, 022, 023)"
+  └ 7 lines...
+
+Now let me create the integration test file structure (TASK-024):
+
+● Create src/test/suite/compileBuffer.integration.test.ts (+75)
+
+Now let me create the test documentation (TASK-025):
+
+● Create src/test/suite/README.md (+77)
+
+Let me commit the integration test structure and documentation:
+
