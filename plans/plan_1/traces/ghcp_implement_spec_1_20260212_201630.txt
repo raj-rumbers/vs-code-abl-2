@@ -194,3 +194,71 @@ Now let me create the test documentation (TASK-025):
 
 Let me commit the integration test structure and documentation:
 
+● Commit integration tests and docs
+  $ cd /workspaces/vs-code-abl-2 && git add -A && git commit -m "[neo] Add integration test
+  structure and test documentation (TASK-024, 025)"
+  └ 5 lines...
+
+Now I need to set up a test runner and run the tests (TASK-026). First, let me check if there's a test script in package.json and add one if needed:
+
+● Check for test script
+  $ cd /workspaces/vs-code-abl-2 && grep -A 2 '"scripts"' package.json | head -20
+  └ 4 lines...
+
+I need to add a test script. Let me check what testing tools we have for VS Code extensions:
+
+● Check installed test dependencies
+  $ cd /workspaces/vs-code-abl-2 && npm list @vscode/test-electron mocha 2>&1 | head -10
+  └ 7 lines...
+
+Good, we have both. Now I need to create a test runner. Let me first create a test entry point file:
+
+● Create src/test/runTest.ts (+21)
+
+Now let me create the test suite index file:
+
+● Create src/test/suite/index.ts (+38)
+
+Now let me add the test script to package.json. First, let me view the scripts section:
+
+● Read package.json lines 21-28
+  └ 8 lines read
+
+● Edit package.json (+4)
+
+Now I need to install glob package which is used by the test runner:
+
+● Check if glob is installed
+  $ cd /workspaces/vs-code-abl-2 && npm list glob 2>&1 | head -5
+  └ 6 lines...
+
+Good, glob is already available. Now let me compile the TypeScript files:
+
+● Compile TypeScript
+  $ cd /workspaces/vs-code-abl-2 && npm run compile 2>&1 | tail -20
+  └ 7 lines...
+
+I need to fix the imports and glob usage:
+
+● Edit src/test/suite/index.ts (+17 -18)
+
+● Compile again
+  $ cd /workspaces/vs-code-abl-2 && npm run compile 2>&1 | tail -10
+  └ 5 lines...
+
+Let me check the glob version and use the correct import:
+
+● Check glob version
+  $ cd /workspaces/vs-code-abl-2 && npm list glob | grep -v "deduped" | head -10
+  └ 11 lines...
+
+The project has multiple versions of glob. Let me use the sync API with the older version:
+
+● Edit src/test/suite/index.ts (+3 -3)
+
+● Compile again
+  $ cd /workspaces/vs-code-abl-2 && npm run compile 2>&1 | tail -5
+  └ 3 lines...
+
+Great! Now it compiles. Let me commit this progress:
+

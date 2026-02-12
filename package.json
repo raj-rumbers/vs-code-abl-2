@@ -23,6 +23,10 @@
         "webpack": "webpack --mode development",
         "webpack-dev": "webpack --mode development --watch",
         "package": "webpack --mode production --devtool hidden-source-map",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "pretest": "npm run compile",
+        "test": "node ./out/test/runTest.js",
         "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
         "grammar-version": "npm list abl-tmlanguage --depth=0 | head -2 | tail -1 | cut -c 5- > resources/grammar-version.txt"
     },
