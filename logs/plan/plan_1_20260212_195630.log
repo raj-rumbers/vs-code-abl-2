@@ -1,0 +1,37 @@
+[2026-02-12 19:56:30] [INFO] [lib-error-handling.sh:240] Logging initialized for plan (ID: 1)
+[2026-02-12 19:56:30] [INFO] [lib-error-handling.sh:241] Log file: logs/plan/plan_1_20260212_195630.log
+[2026-02-12 19:56:30] [INFO] [lib-error-handling.sh:242] Error log: logs/plan/plan_1_20260212_195630.err
+[2026-02-12 19:56:30] [INFO] [plan.sh:389] === Plan Workflow Script ===
+[2026-02-12 19:56:30] [INFO] [plan.sh:390] Issue ID: 1
+[2026-02-12 19:56:30] [INFO] [plan.sh:391] Mode: normal
+[2026-02-12 19:56:30] [INFO] [lib-error-handling.sh:560] Running pre-flight checks for plan.sh...
+[2026-02-12 19:56:31] [INFO] [lib-error-handling.sh:596] ✓ Pre-flight checks passed
+[2026-02-12 19:56:31] [INFO] [plan.sh:40] ✓ Successfully loaded project configuration:
+[2026-02-12 19:56:31] [INFO] [plan.sh:41]   - Project Name: OpenEdge ABL LSP
+[2026-02-12 19:56:31] [INFO] [plan.sh:42]   - Language: TypeScript
+[2026-02-12 19:56:31] [INFO] [plan.sh:43]   - Framework: VS Code Extension API
+[2026-02-12 19:56:31] [INFO] [plan.sh:407] Processing issue #1...
+[2026-02-12 19:56:31] [INFO] [plan.sh:92] Fetching GitHub issue #1...
+[2026-02-12 19:56:31] [INFO] [plan.sh:125] ✓ Issue #1 fetched successfully
+[2026-02-12 19:56:31] [INFO] [plan.sh:135] Saving issue data to file...
+[2026-02-12 19:56:31] [WARN] [lib-error-handling.sh:494] Directory does not exist, attempting to create: plans/plan_1
+[2026-02-12 19:56:31] [INFO] [plan.sh:175] ✓ Issue data saved to: plans/plan_1/issue.md
+[2026-02-12 19:56:31] [INFO] [plan.sh:416] ✓ Issue #1 processed successfully
+[2026-02-12 19:56:31] [INFO] [plan.sh:208] === Starting Planning Workflow ===
+[2026-02-12 19:56:31] [INFO] [plan.sh:209] Issue ID: 1
+[2026-02-12 19:56:31] [INFO] [plan.sh:210] Mode: normal
+[2026-02-12 19:56:31] [WARN] [lib-error-handling.sh:494] Directory does not exist, attempting to create: plans/plan_1/traces
+[2026-02-12 19:56:31] [INFO] [plan.sh:258] Trace file: plans/plan_1/traces/ghcp_plan_issue_1_20260212_195631.txt
+[2026-02-12 19:56:31] [INFO] [plan.sh:259] Executing planning pipeline with GitHub Copilot...
+[2026-02-12 19:56:31] [INFO] [lib-error-handling.sh:703] Validating pipeline prerequisites...
+[2026-02-12 19:56:33] [INFO] [lib-error-handling.sh:770] ✓ Pipeline prerequisites validated
+[2026-02-12 19:56:33] [INFO] [lib-error-handling.sh:875] Ensuring GitHub authentication...
+[2026-02-12 19:56:33] [INFO] [lib-error-handling.sh:805] ✓ GitHub authentication valid
+[2026-02-12 19:56:43] [INFO] [lib-error-handling.sh:1093] Executing pipeline: Planning with GitHub Copilot
+[2026-02-12 20:06:50] [INFO] [lib-error-handling.sh:1107] ✓ Pipeline succeeded
+[2026-02-12 20:06:50] [INFO] [plan.sh:304] ✓ Pipeline execution completed successfully
+[2026-02-12 20:06:50] [INFO] [plan.sh:305] Trace saved to: plans/plan_1/traces/ghcp_plan_issue_1_20260212_195631.txt
+[2026-02-12 20:06:50] [INFO] [plan.sh:317] Trace file size: 8.0K
+[2026-02-12 20:06:50] [INFO] [plan.sh:347] === Plan Workflow Completed Successfully ===
+[2026-02-12 20:06:50] [INFO] [lib-error-handling.sh:398] Script completed successfully
+[2026-02-12 20:06:50] [INFO] [lib-error-handling.sh:410] Execution time: 620s

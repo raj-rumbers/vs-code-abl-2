@@ -14,6 +14,7 @@ import { ClassBrowserProvider } from './ClassBrowser';
 import { openInAB, openInProcEditor, runGUI } from './shared/ablRun';
 import { FileInfo, ProjectInfo } from './shared/FileInfo';
 import { loadConfigFile, OpenEdgeConfig, OpenEdgeMainConfig, OpenEdgeProjectConfig, ProfileConfig } from './shared/openEdgeConfigFile';
+import { resolveProjectWithFallback } from './shared/projectResolver';
 
 let client: LanguageClient;
 
@@ -364,31 +365,81 @@ function switchProfile(project: OpenEdgeProjectConfig): void {
     quickPick.show();
 }
 
+/**
+ * Compiles (checks syntax of) the current buffer.
+ * Uses intelligent project resolution to automatically select the appropriate project.
+ */
 function compileBuffer() {
-    if (vscode.window.activeTextEditor == undefined)
+    // Validate active editor exists
+    if (vscode.window.activeTextEditor == undefined) {
         return;
-
-    if (projects.length == 1) {
-        compileBufferInProject(projects[0], vscode.window.activeTextEditor.document.uri.toString(), vscode.window.activeTextEditor.document.getText());
-    } else {
-        const defPrj = getProjectByName(defaultProjectName);
-        if (defPrj) {
-            compileBufferInProject(defPrj, vscode.window.activeTextEditor.document.uri.toString(), vscode.window.activeTextEditor.document.getText());
-        } else {
-            const list = projects.map(project => ({ label: project.name, description: project.rootDir }));
-            list.sort((a, b) => a.label.localeCompare(b.label));
-
-            const quickPick = vscode.window.createQuickPick();
-            quickPick.canSelectMany = false;
-            quickPick.title = "Choose project to compile buffer:";
-            quickPick.items = list;
-            quickPick.onDidChangeSelection(args => {
-                quickPick.hide();
-                compileBufferInProject(getProjectByName(args[0].label), vscode.window.activeTextEditor.document.uri.toString(), vscode.window.activeTextEditor.document.getText());
-            });
-            quickPick.show();
-        }
     }
+
+    // Extract file information for project resolution
+    const editor = vscode.window.activeTextEditor;
+    const filePath = editor.document.uri.fsPath;
+    const fileUri = editor.document.uri.toString();
+    const fileContent = editor.document.getText();
+
+    // Resolve project using priority-based algorithm:
+    // 1. Auto-detect from file path (single match or most specific nested project)
+    // 2. Fall back to default project (if configured and no auto-detection)
+    // 3. Return null if manual selection needed
+    const selectedProject = resolveProjectWithFallback(
+        filePath,
+        projects,
+        defaultProjectName,
+        getProjectByName
+    );
+    
+    if (selectedProject) {
+        // Project successfully resolved (auto or default) - proceed with compilation
+        compileBufferInProject(selectedProject, fileUri, fileContent);
+    } else {
+        // Could not auto-resolve - prompt user to manually select project
+        showProjectSelectionDialog(fileUri, fileContent);
+    }
+}
+
+/**
+ * Shows a quick-pick dialog for manual project selection.
+ * Called when automatic project detection cannot determine the appropriate project.
+ * 
+ * @param fileUri - URI of the file to compile
+ * @param fileContent - Content of the file to compile
+ */
+function showProjectSelectionDialog(fileUri: string, fileContent: string) {
+    // Create sorted list of projects for display
+    const projectList = projects.map(project => ({ 
+        label: project.name, 
+        description: project.rootDir 
+    }));
+    projectList.sort((a, b) => a.label.localeCompare(b.label));
+
+    // Create and configure QuickPick UI
+    const quickPick = vscode.window.createQuickPick();
+    quickPick.canSelectMany = false;
+    quickPick.title = "Choose project to compile buffer:";
+    quickPick.placeholder = "Select a project (file location could not be determined automatically)";
+    quickPick.items = projectList;
+    
+    // Handle selection
+    quickPick.onDidChangeSelection(selectedItems => {
+        if (selectedItems.length > 0) {
+            quickPick.hide();
+            const project = getProjectByName(selectedItems[0].label);
+            if (project) {
+                compileBufferInProject(project, fileUri, fileContent);
+            }
+        }
+    });
+    
+    // Handle dismissal
+    quickPick.onDidHide(() => {
+        quickPick.dispose();
+    });
+    
+    quickPick.show();
 }
 
 function compileBufferInProject(project: OpenEdgeProjectConfig, bufferUri: string, buffer: string) {

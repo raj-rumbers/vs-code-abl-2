@@ -1,0 +1,33 @@
+[2026-02-12 19:40:40] [INFO] [lib-error-handling.sh:240] Logging initialized for define (ID: 1)
+[2026-02-12 19:40:40] [INFO] [lib-error-handling.sh:241] Log file: logs/define/define_1_20260212_194040.log
+[2026-02-12 19:40:40] [INFO] [lib-error-handling.sh:242] Error log: logs/define/define_1_20260212_194040.err
+[2026-02-12 19:40:40] [INFO] [define.sh:159] === Define Workflow Started ===
+[2026-02-12 19:40:40] [INFO] [define.sh:160] Issue ID: 1
+[2026-02-12 19:40:40] [INFO] [define.sh:161] Mode: normal
+[2026-02-12 19:40:40] [INFO] [lib-error-handling.sh:560] Running pre-flight checks for define.sh...
+[2026-02-12 19:40:41] [WARN] [lib-error-handling.sh:494] Directory does not exist, attempting to create: traces
+[2026-02-12 19:40:41] [WARN] [lib-error-handling.sh:494] Directory does not exist, attempting to create: plans
+[2026-02-12 19:40:41] [INFO] [lib-error-handling.sh:596] ✓ Pre-flight checks passed
+[2026-02-12 19:40:41] [INFO] [define.sh:40] ✓ Successfully loaded project configuration:
+[2026-02-12 19:40:41] [INFO] [define.sh:41]   - Project Name: OpenEdge ABL LSP
+[2026-02-12 19:40:41] [INFO] [define.sh:42]   - Language: TypeScript
+[2026-02-12 19:40:41] [INFO] [define.sh:43]   - Framework: VS Code Extension API
+[2026-02-12 19:40:41] [WARN] [lib-error-handling.sh:494] Directory does not exist, attempting to create: issues
+[2026-02-12 19:40:41] [WARN] [lib-error-handling.sh:494] Directory does not exist, attempting to create: issues/issue_1
+[2026-02-12 19:40:41] [WARN] [lib-error-handling.sh:494] Directory does not exist, attempting to create: issues/issue_1/traces
+[2026-02-12 19:40:41] [WARN] [lib-error-handling.sh:494] Directory does not exist, attempting to create: issues/issue_1/reviews
+[2026-02-12 19:40:41] [INFO] [define.sh:189] ✓ Directory structure ready
+[2026-02-12 19:40:41] [INFO] [define.sh:229] Trace file: issues/issue_1/traces/ghcp_prd_review_issue_1_20260212_194041.txt
+[2026-02-12 19:40:41] [INFO] [define.sh:230] Running PRD review with PM chat mode for issue #1...
+[2026-02-12 19:40:41] [INFO] [lib-error-handling.sh:703] Validating pipeline prerequisites...
+[2026-02-12 19:40:42] [INFO] [lib-error-handling.sh:770] ✓ Pipeline prerequisites validated
+[2026-02-12 19:40:42] [INFO] [lib-error-handling.sh:875] Ensuring GitHub authentication...
+[2026-02-12 19:40:43] [INFO] [lib-error-handling.sh:805] ✓ GitHub authentication valid
+[2026-02-12 19:40:52] [INFO] [lib-error-handling.sh:1093] Executing pipeline: PRD review with PM chat mode
+[2026-02-12 19:45:17] [INFO] [lib-error-handling.sh:1107] ✓ Pipeline succeeded
+[2026-02-12 19:45:17] [INFO] [define.sh:275] ✓ Pipeline execution completed successfully
+[2026-02-12 19:45:17] [INFO] [define.sh:276] Trace saved to: issues/issue_1/traces/ghcp_prd_review_issue_1_20260212_194041.txt
+[2026-02-12 19:45:17] [INFO] [define.sh:288] Trace file size: 4.0K
+[2026-02-12 19:45:17] [INFO] [define.sh:318] === Define Workflow Completed Successfully ===
+[2026-02-12 19:45:17] [INFO] [lib-error-handling.sh:398] Script completed successfully
+[2026-02-12 19:45:17] [INFO] [lib-error-handling.sh:410] Execution time: 277s
