@@ -1,0 +1,8 @@
+{
+  "projectName": "OpenEdge ABL LSP",
+  "description": "OpenEdge ABL Language Server support for Visual Studio Code with syntax highlighting, code completion, debugging, and multi-threaded background compilation",
+  "language": "TypeScript",
+  "framework": "VS Code Extension API",
+  "testingFramework": "@vscode/test-electron",
+  "packageManager": "npm"
+}
