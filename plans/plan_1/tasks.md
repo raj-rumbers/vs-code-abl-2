@@ -58,18 +58,18 @@
 
 ## Phase 4: Extension - Apply to Other Commands
 
-- [ ] TASK-028: Audit All Commands Using getProject()
-- [ ] TASK-029: Create Helper Function for Project Selection
-- [ ] TASK-030: Update preprocessFile Command
-- [ ] TASK-031: Update generateListing Command
-- [ ] TASK-032: Update generateDebugListing Command
-- [ ] TASK-033: Update generateXref Command
-- [ ] TASK-034: Update generateXrefAndJumpToCurrentLine Command
-- [ ] TASK-035: Review and Update compileBuffer Dialog
-- [ ] TASK-036: Compile and Test All Updated Commands
-- [ ] TASK-037: Document Command Updates
+- [x] TASK-028: Audit All Commands Using getProject()
+- [x] TASK-029: Create Helper Function for Project Selection
+- [x] TASK-030: Update preprocessFile Command
+- [x] TASK-031: Update generateListing Command
+- [x] TASK-032: Update generateDebugListing Command
+- [x] TASK-033: Update generateXref Command
+- [x] TASK-034: Update generateXrefAndJumpToCurrentLine Command
+- [x] TASK-035: Review and Update compileBuffer Dialog
+- [x] TASK-036: Compile and Test All Updated Commands
+- [x] TASK-037: Document Command Updates
 
-**Phase 4 Status**: [ ] Complete
+**Phase 4 Status**: [x] Complete
 
 ---
 
@@ -93,10 +93,10 @@
 - [x] Phase 1: Foundation - Project Resolution Utility (8 tasks)
 - [x] Phase 2: Integration - Update compileBuffer Function (11 tasks)
 - [x] Phase 3: Testing - Unit and Integration Tests (8 tasks)
-- [ ] Phase 4: Extension - Apply to Other Commands (10 tasks)
+- [x] Phase 4: Extension - Apply to Other Commands (10 tasks)
 - [ ] Phase 5: Documentation and Finalization (8 tasks)
 
-**Total Progress**: 27/45 tasks complete (60%)
+**Total Progress**: 37/45 tasks complete (82%)
 
 ---
 
