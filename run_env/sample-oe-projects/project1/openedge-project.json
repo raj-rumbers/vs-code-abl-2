@@ -1,0 +1,16 @@
+{
+  "name": "project1",
+  "version": "1.0",
+  "oeversion": "12.8",
+  // Single line comment
+  "charset": "utf-8",
+  "graphicalMode": true,
+  "extraParameters": "",
+  "buildPath": [ /* Another
+  comment */
+    { "type": "source", "path": "src" }
+  ],
+  "buildDirectory": "build",
+  "dbConnections": [],
+  "numThreads": 1, "profiles": [ { "name": "profile1", "inherits": "default", "value": { "graphicalMode": false, "buildDirectory": "build-tty"}}]
+}

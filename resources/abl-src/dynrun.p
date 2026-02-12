@@ -1,0 +1,145 @@
+USING Progress.Json.ObjectModel.JsonArray.
+USING Progress.Json.ObjectModel.JsonObject.
+USING Progress.Json.ObjectModel.ObjectModelParser.
+
+&scoped-define MAJOR INTEGER(SUBSTRING(PROVERSION, 1, INDEX(PROVERSION, '.') - 1))
+&scoped-define MAJOR_SZ LENGTH({&MAJOR})
+
+&scoped-define PROVERSION_MINOR SUBSTRING(PROVERSION(1), {&MAJOR_SZ} + 2)
+&scoped-define MINOR INTEGER(SUBSTRING({&PROVERSION_MINOR}, 1, INDEX({&PROVERSION_MINOR}, '.') - 1))
+&scoped-define MINOR_SZ LENGTH({&MINOR})
+
+&scoped-define PROVERSION_PATH SUBSTRING(PROVERSION(1), {&MAJOR_SZ} + {&MINOR_SZ} + 3)
+&scoped-define PATCH INTEGER(SUBSTRING({&PROVERSION_PATH}, 1, INDEX({&PROVERSION_PATH}, '.') - 1))
+
+&if ({&MAJOR} ge 11) &then
+block-level on error undo, throw.
+&endif
+
+DEFINE NEW SHARED VARIABLE pctVerbose AS LOGICAL NO-UNDO.
+DEFINE VARIABLE noErrorOnQuit AS LOGICAL NO-UNDO.
+
+DEFINE VARIABLE i AS INTEGER NO-UNDO INITIAL ?.
+
+DEFINE TEMP-TABLE ttParams NO-UNDO
+  FIELD key AS CHARACTER
+  FIELD val AS CHARACTER.
+
+FUNCTION getParameter RETURNS CHARACTER (k AS CHARACTER).
+  FIND ttParams WHERE ttParams.key EQ k NO-LOCK NO-ERROR.
+  RETURN (IF AVAILABLE ttParams THEN ttParams.val ELSE ?).
+END FUNCTION.
+
+DEFINE VARIABLE jsonParser AS CLASS ObjectModelParser NO-UNDO.
+DEFINE VARIABLE configJson AS CLASS JsonObject NO-UNDO.
+
+DEFINE VARIABLE ppEntries   AS CLASS JsonArray NO-UNDO.
+DEFINE VARIABLE dbEntries   AS CLASS JsonArray NO-UNDO.
+DEFINE VARIABLE prmEntries  AS CLASS JsonArray NO-UNDO.
+DEFINE VARIABLE procEntries AS CLASS JsonArray NO-UNDO.
+DEFINE VARIABLE procEntry   AS CLASS JsonObject NO-UNDO.
+DEFINE VARIABLE dbEntry     AS CLASS JsonObject NO-UNDO.
+DEFINE VARIABLE prmEntry    AS CLASS JsonObject NO-UNDO.
+DEFINE VARIABLE outprmEntries AS CLASS JsonArray NO-UNDO.
+DEFINE VARIABLE zz AS INTEGER     NO-UNDO.
+DEFINE VARIABLE zz2 AS INTEGER     NO-UNDO.
+DEFINE VARIABLE xx AS INTEGER     NO-UNDO.
+DEFINE VARIABLE yy AS CHARACTER   NO-UNDO.
+DEFINE VARIABLE ww AS HANDLE      NO-UNDO.
+
+ASSIGN jsonParser = NEW ObjectModelParser().
+ASSIGN configJson = CAST(jsonParser:ParseFile(SESSION:PARAMETER), JsonObject).
+LOG-MANAGER:WRITE-MESSAGE(SUBSTITUTE("JSON Config file: &1", SESSION:PARAMETER)).
+OS-DELETE VALUE(SESSION:PARAMETER).
+
+//DB connections + aliases
+IF configJson:has("databases") THEN
+DO:
+  ASSIGN dbEntries = configJson:GetJsonArray("databases").
+  DO zz = 1 TO dbEntries:Length:
+    ASSIGN dbEntry = dbEntries:GetJsonObject(zz).
+    IF (dbEntry:has("name") AND dbEntry:has("connect")) THEN DO:
+      LOG-MANAGER:WRITE-MESSAGE(SUBSTITUTE("Connecting to DB '&1': '&2'", dbEntry:GetCharacter("name"), dbEntry:GetCharacter("connect"))).
+      CONNECT VALUE(dbEntry:GetCharacter("connect")) NO-ERROR.
+      IF ERROR-STATUS:ERROR THEN DO:
+        IF (ERROR-STATUS:NUM-MESSAGES > 1) OR (ERROR-STATUS:GET-NUMBER(1) NE 1552) THEN DO:
+          LOG-MANAGER:WRITE-MESSAGE(SUBSTITUTE("Unable to connect to '&1'" , dbEntry:GetCharacter("name"))).
+          DO i = 1 TO ERROR-STATUS:NUM-MESSAGES:
+            LOG-MANAGER:WRITE-MESSAGE(ERROR-STATUS:GET-MESSAGE(i)).
+          END.
+          QUIT.
+        END.
+      END.
+      IF (dbEntry:has("aliases")) THEN DO:
+        DO zz2 = 1 TO dbEntry:GetJsonArray("aliases"):Length:
+          LOG-MANAGER:WRITE-MESSAGE(SUBSTITUTE("Create alias '&1' for '&2'", dbEntry:GetJsonArray("aliases"):GetCharacter(zz2), dbEntry:GetCharacter("name"))).
+          CREATE ALIAS VALUE(dbEntry:GetJsonArray("aliases"):GetCharacter(zz2)) FOR DATABASE VALUE(dbEntry:GetCharacter("name")).
+        END.
+      END.
+    END.
+  END.
+END.
+
+// PROPATH entries
+ASSIGN ppEntries = configJson:GetJsonArray("propath").
+DO zz = 1 TO ppEntries:Length:
+  ASSIGN PROPATH = ppEntries:getCharacter(ppEntries:Length + 1 - zz) + "," + PROPATH.
+END.
+LOG-MANAGER:WRITE-MESSAGE("PROPATH: " + PROPATH).
+
+// Input parameters
+IF (configJson:has("parameters")) THEN DO:
+  ASSIGN prmEntries = configJson:GetJsonArray("parameters").
+  DO zz = 1 TO prmEntries:Length:
+    ASSIGN prmEntry = prmEntries:GetJsonObject(zz).
+    DO ON ERROR UNDO, LEAVE:
+      CREATE ttParams.
+      ASSIGN ttParams.key = prmEntry:getCharacter("name")
+             ttParams.val = prmEntry:getCharacter("value").
+    END.
+  END.
+END.
+
+IF configJson:getLogical("super") THEN DO:
+  SESSION:ADD-SUPER-PROCEDURE(THIS-PROCEDURE).
+END.
+
+// Startup procedures
+IF (configJson:has("procedures")) THEN DO:
+  ASSIGN procEntries = configJson:GetJsonArray("procedures").
+  DO zz = 1 to procEntries:Length:
+    ASSIGN procEntry = procEntries:GetJsonObject(zz).
+    DO ON ERROR UNDO, LEAVE:
+      ASSIGN yy = procEntry:getCharacter("mode").
+      IF (yy EQ "once") THEN DO:
+        LOG-MANAGER:WRITE-MESSAGE(SUBSTITUTE("RunOnce '&1'", procEntry:getCharacter("name"))).
+        RUN VALUE(procEntry:getCharacter("name")).
+      END.
+      ELSE IF (yy EQ "persistent") THEN DO:
+        LOG-MANAGER:WRITE-MESSAGE(SUBSTITUTE("RunPersistent '&1'", procEntry:getCharacter("name"))).
+        RUN VALUE(procEntry:getCharacter("name")) PERSISTENT.
+      END.
+      ELSE DO:
+        LOG-MANAGER:WRITE-MESSAGE(SUBSTITUTE("RunSuper '&1'", procEntry:getCharacter("name"))).
+        RUN VALUE(procEntry:getCharacter("name")) PERSISTENT SET ww.
+        SESSION:ADD-SUPER-PROCEDURE(ww).
+      END.
+    END.
+  END.
+END.
+
+// Execute procedure
+log-manager:write-message(substitute("RUN &1", configJson:getCharacter("procedure"))).
+run value(configJson:getCharacter("procedure")).
+quit.
+
+catch err as Progress.Lang.Error:
+  &IF ({&MAJOR} GE 12) OR (({&MAJOR} EQ 11 ) AND ({&MINOR} EQ 7) AND ({&PATCH} GE 3)) &THEN
+  session:exit-code = 1.
+  &ENDIF
+  message "Unexpected error(s):".
+  do zz = 1 to err:NumMessages:
+    message substitute(" &1", err:getMessage(zz)).
+  end.
+  quit.
+end catch.

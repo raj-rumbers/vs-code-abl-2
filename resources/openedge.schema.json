@@ -1,0 +1,429 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "https://riverside-software.fr/openedge-project.json",
+  "definitions": {},
+  "id": "openedge.json",
+  "type": "object",
+  "required": [
+    "name",
+    "version",
+    "charset"
+  ],
+  "properties": {
+    "name": {
+      "id": "/properties/name",
+      "description": "Project name",
+      "type": "string"
+    },
+    "version": {
+      "id": "/properties/version",
+      "description": "Project version",
+      "type": "string"
+    },
+    "defaultProfileDisplayName": {
+      "id": "/properties/defaultProfileDisplayName",
+      "description": "Default profile display name",
+      "type": "string"
+    },
+    "oeversion": {
+      "id": "/properties/oeversion",
+      "description": "OpenEdge version for this project",
+      "enum": [
+        "9.1E",
+        "10.2B",
+        "11.5",
+        "11.6",
+        "11.7",
+        "12.2",
+        "12.4",
+        "12.5",
+        "12.6",
+        "12.7",
+        "12.8",
+        "13.0",
+        "ESAP"
+      ],
+      "type": "string"
+    },
+    "charset": {
+      "id": "/properties/charset",
+      "description": "Charset used by the language server to read source code. Not used by VSCode session.",
+      "type": "string"
+    },
+    "includeFileExtensions": {
+      "id": "/properties/includeFileExtensions",
+      "description": "List of extensions of OpenEdge include files",
+      "items": "string"
+    },
+    "graphicalMode": {
+      "id": "/properties/graphicalMode",
+      "description": "Use prowin or _progres to start OpenEdge sessions",
+      "default": false,
+      "type": "boolean"
+    },
+    "extraParameters": {
+      "id": "/properties/parameterFiles",
+      "description": "Extra parameters passed to Progress executable",
+      "type": "string"
+    },
+    "buildDirectory": {
+      "id": "/properties/buildDirectory",
+      "description": "Default build directory (if not specified in source directory)",
+      "type": "string"
+    },
+    "preprocessor": {
+      "id": "/properties/preprocessor",
+      "description": "Custom preprocessor values in Proparse",
+      "properties": {
+        "opsys": {
+          "description": "{&OPSYS} variable and OPSYS function",
+          "enum": [
+            "windows",
+            "unix"
+          ],
+          "type": "string"
+        },
+        "windowSystem": {
+          "description": "{&WINDOW-SYSTEM} variable",
+          "type": "string"
+        },
+        "proversion": {
+          "description": "PROVERSION function",
+          "type": "string"
+        },
+        "batchMode": {
+          "description": "{&BATCH-MODE} variable",
+          "type": "boolean"
+        },
+        "processArchitecture": {
+          "description": "{&PROCESS-ARCHITECTURE} variable",
+          "enum": [
+            32,
+            64
+          ],
+          "type": "integer"
+        },
+        "tokenStartChars": {
+          "description": "Comma-separated list of characters that can start function or procedure names. Valid characters are &, /, ^, ;, *, !, #, % and backtick",
+          "type": "string"
+        }
+      }
+    },
+    "buildPath": {
+      "id": "/properties/buildPath",
+      "description": "Source and PROPATH entries",
+      "items": {
+        "type": "object",
+        "required": [
+          "type",
+          "path"
+        ],
+        "properties": {
+          "type": {
+            "description": "Entry type",
+            "enum": [
+              "source",
+              "propath"
+            ],
+            "type": "string"
+          },
+          "path": {
+            "description": "Path (relative to root directory). Special value ${DLC} can be used.",
+            "type": "string"
+          },
+          "build": {
+            "description": "Optional build directory (absolute path, or relative to root directory). Defaults to buildDirectory",
+            "type": "string"
+          },
+          "xref": {
+            "description": "Optional XREF directory (relative to root directory). Defaults to .builder/pct",
+            "type": "string"
+          },
+          "includes": {
+            "description": "Only for source entries. Ant-style include patterns (comma-separated list). Defaults to **/*.p,**/*.w,**/*.cls",
+            "type": "string"
+          },
+          "includesFile": {
+            "description": "Name of a file; each line of this file is added to the list of files to be included (Ant-style pattern). Mutually exclusive with includes attribute",
+            "type": "string"
+          },
+          "excludes": {
+            "description": "Only for source entries. Ant-style exclude patterns (comma-separated list).",
+            "type": "string"
+          },
+          "excludesFile": {
+            "description": "Name of a file; each line of this file is added to the list of files to be excluded (Ant-style pattern). Mutually exclusive with excludes attribute",
+            "type": "string"
+          },
+          "documentation": {
+            "description": "JSON documentation of classes in this propath entry (use https://wiki.rssw.eu/pct/JsonDocumentation.md PCT task)",
+            "type": "string"
+          },
+          "deployment": {
+            "description": "List of directories where to copy rcode (optional)",
+            "items": "string"
+          }
+        }
+      },
+      "type": "array"
+    },
+    "procedures": {
+      "id": "/properties/procedures",
+      "description": "List of startup procedures, executed after DB connections and propath, but before main entry point",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "mode"
+        ],
+        "properties": {
+          "name": {
+            "description": "Procedure name",
+            "type": "string"
+          },
+          "mode": {
+            "description": "RUN mode",
+            "enum": [
+              "init",
+              "once",
+              "persistent",
+              "super"
+            ],
+            "type": "string"
+          }
+        }
+      }
+    },
+    "dbConnections": {
+      "id": "/properties/dbConnections",
+      "description": "Database connection strings (one DB per entry)",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "schemaFile",
+          "connect",
+          "aliases"
+        ],
+        "properties": {
+          "name": {
+            "description": "Database logical name",
+            "type": "string"
+          },
+          "schemaFile": {
+            "description": "Database schema file (DF format)",
+            "type": "string"
+          },
+          "connect": {
+            "description": "Connection string",
+            "type": "string"
+          },
+          "aliases": {
+            "description": "Database aliases",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "type": "array"
+    },
+    "numThreads": {
+      "id": "/properties/threads",
+      "description": "Number of background worker threads",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 32
+    },
+    "profiles": {
+      "id": "/properties/profiles",
+      "description": "Extra profiles",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "value"
+        ],
+        "properties": {
+          "name": {
+            "description": "Profile name",
+            "type": "string"
+          },
+          "inherits": {
+            "description": "Inherits all values from another quality profile. Use 'default' for main profile. Can be empty.",
+            "type": "string"
+          },
+          "value": {
+            "description": "Profile value",
+            "type": "object",
+            "properties": {
+              "oeversion": {
+                "id": "/properties/oeversion",
+                "description": "OpenEdge version for this project",
+                "enum": [
+                  "9.1E",
+                  "10.2B",
+                  "11.5",
+                  "11.6",
+                  "11.7",
+                  "12.2",
+                  "12.4",
+                  "12.5",
+                  "12.6",
+                  "12.7",
+                  "12.8",
+                  "13.0",
+                  "ESAP"
+                ],
+                "type": "string"
+              },
+              "graphicalMode": {
+                "id": "/properties/graphicalMode",
+                "description": "Use prowin or _progres to start OpenEdge sessions",
+                "default": false,
+                "type": "boolean"
+              },
+              "extraParameters": {
+                "id": "/properties/parameterFiles",
+                "description": "Extra parameters passed to Progress executable",
+                "type": "string"
+              },
+              "buildDirectory": {
+                "id": "/properties/buildDirectory",
+                "description": "Default build directory (if not specified in source directory). Can be an absolute path, or relative to root directory",
+                "type": "string"
+              },
+              "preprocessor": {
+                "id": "/properties/preprocessor",
+                "description": "Custom preprocessor values in Proparse",
+                "properties": {
+                  "opsys": {
+                    "description": "{&OPSYS} variable and OPSYS function ('windows' value will return WIN32)",
+                    "enum": [
+                      "windows",
+                      "unix"
+                    ],
+                    "type": "string"
+                  },
+                  "windowSystem": {
+                    "description": "{&WINDOW-SYSTEM} variable",
+                    "type": "string"
+                  },
+                  "proversion": {
+                    "description": "PROVERSION function",
+                    "type": "string"
+                  },
+                  "batchMode": {
+                    "description": "{&BATCH-MODE} variable",
+                    "type": "boolean"
+                  },
+                  "processArchitecture": {
+                    "description": "{&PROCESS-ARCHITECTURE} variable",
+                    "enum": [
+                      32,
+                      64
+                    ],
+                    "type": "integer"
+                  },
+                  "tokenStartChars": {
+                    "description": "List of characters (no separator) that can start function or procedure names. Valid characters are &, /, ^, ;, *, !, #, % and backtick.",
+                    "type": "string"
+                  }
+                }
+              },
+              "buildPath": {
+                "id": "/properties/buildPath",
+                "description": "Source and PROPATH entries",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "path"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "Entry type",
+                      "enum": [
+                        "source",
+                        "propath"
+                      ],
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Path (relative to root directory). Special value ${DLC} can be used.",
+                      "type": "string"
+                    },
+                    "build": {
+                      "description": "Optional build directory (absolute path, or relative to root directory). Defaults to buildDirectory",
+                      "type": "string"
+                    },
+                    "xref": {
+                      "description": "Optional XREF directory (relative to root directory). Defaults to .builder/pct",
+                      "type": "string"
+                    },
+                    "includes": {
+                      "description": "Only for source entries. Ant-style include patterns (comma-separated list). Defaults to **/*.p,**/*.w,**/*.cls",
+                      "type": "string"
+                    },
+                    "excludes": {
+                      "description": "Only for source entries. Ant-style exclude patterns (comma-separated list).",
+                      "type": "string"
+                    },
+                    "documentation": {
+                      "description": "JSON documentation of classes in this propath entry (use https://wiki.rssw.eu/pct/JsonDocumentation.md PCT task)",
+                      "type": "string"
+                    }
+                  }
+                },
+                "type": "array"
+              },
+              "dbConnections": {
+                "id": "/properties/dbConnections",
+                "description": "Database connection strings (one DB per entry)",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "schemaFile",
+                    "connect",
+                    "aliases"
+                  ],
+                  "properties": {
+                    "name": {
+                      "description": "Database logical name",
+                      "type": "string"
+                    },
+                    "schemaFile": {
+                      "description": "Database schema file (DF format)",
+                      "type": "string"
+                    },
+                    "connect": {
+                      "description": "Connection string",
+                      "type": "string"
+                    },
+                    "aliases": {
+                      "description": "Database aliases",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "type": "array"
+              },
+              "numThreads": {
+                "id": "/properties/threads",
+                "description": "Number of background worker threads",
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 32
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
