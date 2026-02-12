@@ -396,48 +396,6 @@ function compileBufferInProject(project: OpenEdgeProjectConfig, bufferUri: strin
 }
 
 /**
- * Shows a quick-pick dialog for manual project selection (for compileBuffer specifically).
- * Called when automatic project detection cannot determine the appropriate project.
- * 
- * @param fileUri - URI of the file to compile
- * @param fileContent - Content of the file to compile
- * @deprecated Use selectProjectForCurrentFile with callback instead
- */
-function showProjectSelectionDialog(fileUri: string, fileContent: string) {
-    // Create sorted list of projects for display
-    const projectList = projects.map(project => ({ 
-        label: project.name, 
-        description: project.rootDir 
-    }));
-    projectList.sort((a, b) => a.label.localeCompare(b.label));
-
-    // Create and configure QuickPick UI
-    const quickPick = vscode.window.createQuickPick();
-    quickPick.canSelectMany = false;
-    quickPick.title = "Choose project to compile buffer:";
-    quickPick.placeholder = "Select a project (file location could not be determined automatically)";
-    quickPick.items = projectList;
-    
-    // Handle selection
-    quickPick.onDidChangeSelection(selectedItems => {
-        if (selectedItems.length > 0) {
-            quickPick.hide();
-            const project = getProjectByName(selectedItems[0].label);
-            if (project) {
-                compileBufferInProject(project, fileUri, fileContent);
-            }
-        }
-    });
-    
-    // Handle dismissal
-    quickPick.onDidHide(() => {
-        quickPick.dispose();
-    });
-    
-    quickPick.show();
-}
-
-/**
  * Selects the appropriate project for the current file using intelligent resolution.
  * If project cannot be determined automatically, shows QuickPick dialog.
  * 
