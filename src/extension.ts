@@ -553,110 +553,115 @@ function dumpFileStatus() {
 }
 
 function preprocessFile() {
-    if (vscode.window.activeTextEditor == undefined)
-        return;
-    const cfg = getProject(vscode.window.activeTextEditor.document.uri.fsPath);
-    if (!cfg) {
-        vscode.window.showInformationMessage("Current buffer doesn't belong to any OpenEdge project");
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
         return;
     }
-
-    client.sendRequest("proparse/preprocess", { fileUri: vscode.window.activeTextEditor.document.uri.toString() }).then(result => {
-      const anyValue = result as any;
-      if (anyValue.fileName === "") {
-        vscode.window.showErrorMessage("Error during preprocess: " + anyValue.message);
-      } else {
-        vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
-      }
-    })
+    
+    const fileUri = editor.document.uri.toString();
+    
+    // Use intelligent project selection with fallback to manual selection
+    selectProjectForCurrentFile(editor, (project) => {
+        client.sendRequest("proparse/preprocess", { fileUri: fileUri }).then(result => {
+            const anyValue = result as any;
+            if (anyValue.fileName === "") {
+                vscode.window.showErrorMessage("Error during preprocess: " + anyValue.message);
+            } else {
+                vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
+            }
+        });
+    });
 }
 
 function generateListing() {
-    if (vscode.window.activeTextEditor == undefined)
-        return;
-    const cfg = getProject(vscode.window.activeTextEditor.document.uri.fsPath);
-    if (!cfg) {
-        vscode.window.showInformationMessage("Current buffer doesn't belong to any OpenEdge project");
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
         return;
     }
-
-    client.sendRequest("proparse/listing", { fileUri: vscode.window.activeTextEditor.document.uri.toString() }).then(result => {
-      const anyValue = result as any;
-      if (anyValue.fileName === "") {
-        vscode.window.showErrorMessage("Error during listing generation: " + anyValue.message);
-      } else {
-        vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
-      }
-    })
+    
+    const fileUri = editor.document.uri.toString();
+    
+    selectProjectForCurrentFile(editor, (project) => {
+        client.sendRequest("proparse/listing", { fileUri: fileUri }).then(result => {
+            const anyValue = result as any;
+            if (anyValue.fileName === "") {
+                vscode.window.showErrorMessage("Error during listing generation: " + anyValue.message);
+            } else {
+                vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
+            }
+        });
+    });
 }
 
 function generateDebugListing() {
-    if (vscode.window.activeTextEditor == undefined)
-        return;
-    const cfg = getProject(vscode.window.activeTextEditor.document.uri.fsPath);
-    if (!cfg) {
-        vscode.window.showInformationMessage("Current buffer doesn't belong to any OpenEdge project");
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
         return;
     }
-
-    client.sendRequest("proparse/debugListing", { fileUri: vscode.window.activeTextEditor.document.uri.toString() }).then(result => {
-      const anyValue = result as any;
-      if (anyValue.fileName === "") {
-        vscode.window.showErrorMessage("Error during debug listing generation: " + anyValue.message);
-      } else {
-        vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
-      }
-    })
+    
+    const fileUri = editor.document.uri.toString();
+    
+    selectProjectForCurrentFile(editor, (project) => {
+        client.sendRequest("proparse/debugListing", { fileUri: fileUri }).then(result => {
+            const anyValue = result as any;
+            if (anyValue.fileName === "") {
+                vscode.window.showErrorMessage("Error during debug listing generation: " + anyValue.message);
+            } else {
+                vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
+            }
+        });
+    });
 }
 
 function generateXref() {
-    if (vscode.window.activeTextEditor == undefined)
-        return;
-    const cfg = getProject(vscode.window.activeTextEditor.document.uri.fsPath);
-    if (!cfg) {
-        vscode.window.showInformationMessage("Current buffer doesn't belong to any OpenEdge project");
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
         return;
     }
-    client.sendRequest("proparse/xref", { fileUri: vscode.window.activeTextEditor.document.uri.toString() }).then(result => {
-      const anyValue = result as any;
-      if (anyValue.fileName === "") {
-        vscode.window.showErrorMessage("Error during XREF generation: " + anyValue.message);
-      } else {
-        vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
-      }
-    })
+    
+    const fileUri = editor.document.uri.toString();
+    
+    selectProjectForCurrentFile(editor, (project) => {
+        client.sendRequest("proparse/xref", { fileUri: fileUri }).then(result => {
+            const anyValue = result as any;
+            if (anyValue.fileName === "") {
+                vscode.window.showErrorMessage("Error during XREF generation: " + anyValue.message);
+            } else {
+                vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName));
+            }
+        });
+    });
 }
 
 function generateXrefAndJumpToCurrentLine() {
-    if (vscode.window.activeTextEditor == undefined)
-        return;
-    const cfg = getProject(vscode.window.activeTextEditor.document.uri.fsPath);
-    if (!cfg) {
-        vscode.window.showInformationMessage("Current buffer doesn't belong to any OpenEdge project");
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
         return;
     }
-
-    const currentEditor = vscode.window.activeTextEditor;
-    const currentLine = currentEditor.selection.active.line + 1; // Convert to 1-based line number
-    const currentFile = currentEditor.document.uri.fsPath;
     
-    client.sendRequest("proparse/xref", { fileUri: vscode.window.activeTextEditor.document.uri.toString() }).then(result => {
-      const anyValue = result as any;
-      if (anyValue.fileName === "") {
-        vscode.window.showErrorMessage("Error during XREF generation: " + anyValue.message);
-      } else {
-        vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName)).then(async editor => {
-            const result = await getXrefLineSelectionForSourceLine(currentFile, anyValue.fileName, currentLine);
-            if (result === null) {
-                vscode.window.showWarningMessage("XREF line mapping failed");
-                return;
+    const fileUri = editor.document.uri.toString();
+    const currentLine = editor.selection.active.line + 1; // Convert to 1-based line number
+    const currentFile = editor.document.uri.fsPath;
+    
+    selectProjectForCurrentFile(editor, (project) => {
+        client.sendRequest("proparse/xref", { fileUri: fileUri }).then(result => {
+            const anyValue = result as any;
+            if (anyValue.fileName === "") {
+                vscode.window.showErrorMessage("Error during XREF generation: " + anyValue.message);
+            } else {
+                vscode.window.showTextDocument(vscode.Uri.file(anyValue.fileName)).then(async editor => {
+                    const result = await getXrefLineSelectionForSourceLine(currentFile, anyValue.fileName, currentLine);
+                    if (result === null) {
+                        vscode.window.showWarningMessage("XREF line mapping failed");
+                        return;
+                    }
+                    const startPosition = new vscode.Position(result.start, 0);
+                    const endPosition = new vscode.Position(result.start + result.count - 1, 1000);
+                    editor.selection = new vscode.Selection(startPosition, endPosition);
+                    editor.revealRange(new vscode.Range(startPosition, endPosition), vscode.TextEditorRevealType.InCenter);
+                });
             }
-            const startPosition = new vscode.Position(result.start, 0);
-            const endPosition = new vscode.Position(result.start + result.count - 1, 1000);
-            editor.selection = new vscode.Selection(startPosition, endPosition);
-            editor.revealRange(new vscode.Range(startPosition, endPosition), vscode.TextEditorRevealType.InCenter);
         });
-      }
     });
 }
 
