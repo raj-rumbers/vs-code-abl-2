@@ -452,6 +452,80 @@ function compileBufferInProject(project: OpenEdgeProjectConfig, bufferUri: strin
     });
 }
 
+/**
+ * Selects the appropriate project for the current file using intelligent resolution.
+ * If project cannot be determined automatically, shows QuickPick dialog.
+ * 
+ * @param editor - The active text editor
+ * @param callback - Function to call with the selected project
+ * @returns void
+ * 
+ * @example
+ * selectProjectForCurrentFile(editor, (project) => {
+ *   // Do something with the selected project
+ *   preprocessFileInProject(project, fileUri);
+ * });
+ */
+function selectProjectForCurrentFile(
+    editor: vscode.TextEditor,
+    callback: (project: OpenEdgeProjectConfig) => void
+): void {
+    const filePath = editor.document.uri.fsPath;
+    
+    // Attempt intelligent project resolution
+    const selectedProject = resolveProjectWithFallback(
+        filePath,
+        projects,
+        defaultProjectName,
+        getProjectByName
+    );
+    
+    if (selectedProject) {
+        // Project resolved - invoke callback
+        callback(selectedProject);
+    } else {
+        // Could not auto-resolve - show manual selection dialog
+        showProjectSelectionDialogWithCallback(callback);
+    }
+}
+
+/**
+ * Shows project selection dialog and invokes callback with selected project.
+ * 
+ * @param callback - Function to call with the selected project
+ */
+function showProjectSelectionDialogWithCallback(
+    callback: (project: OpenEdgeProjectConfig) => void
+): void {
+    const projectList = projects.map(project => ({ 
+        label: project.name, 
+        description: project.rootDir 
+    }));
+    projectList.sort((a, b) => a.label.localeCompare(b.label));
+
+    const quickPick = vscode.window.createQuickPick();
+    quickPick.canSelectMany = false;
+    quickPick.title = "Choose project:";
+    quickPick.placeholder = "Select a project (file location could not be determined automatically)";
+    quickPick.items = projectList;
+    
+    quickPick.onDidChangeSelection(selectedItems => {
+        if (selectedItems.length > 0) {
+            quickPick.hide();
+            const project = getProjectByName(selectedItems[0].label);
+            if (project) {
+                callback(project);
+            }
+        }
+    });
+    
+    quickPick.onDidHide(() => {
+        quickPick.dispose();
+    });
+    
+    quickPick.show();
+}
+
 function debugListingLine() {
     if (vscode.window.activeTextEditor == undefined)
         return;
