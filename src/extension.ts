@@ -22,7 +22,6 @@ const docNodeProvider = new DocumentationNodeProvider();
 let classBrowserProvider: ClassBrowserProvider;
 let oeRuntimes: Array<any>;
 let langServDebug: boolean;
-let defaultProjectName: string;
 let oeStatusBarItem: vscode.StatusBarItem;
 let buildMode = 1;
 
@@ -123,9 +122,13 @@ export function deactivate(): Thenable<void> | undefined {
 
 export function getProject(path: string): OpenEdgeProjectConfig {
     const srchPath = (process.platform === 'win32' ? path.toLowerCase() + '\\' : path + '/');
-    return projects.find(project => process.platform === 'win32' ? 
+    const matches = projects.filter(project => process.platform === 'win32' ?
         srchPath.startsWith(project.rootDir.toLowerCase()) :
-        srchPath.startsWith(project.rootDir) );
+        srchPath.startsWith(project.rootDir));
+    if (matches.length === 0)
+        return undefined;
+    // Return most specific match (longest rootDir) to handle nested projects correctly
+    return matches.reduce((prev, curr) => curr.rootDir.length > prev.rootDir.length ? curr : prev);
 }
 
 export function getProjectByName(name: string): OpenEdgeProjectConfig {
@@ -368,27 +371,36 @@ function compileBuffer() {
     if (vscode.window.activeTextEditor == undefined)
         return;
 
-    if (projects.length == 1) {
-        compileBufferInProject(projects[0], vscode.window.activeTextEditor.document.uri.toString(), vscode.window.activeTextEditor.document.getText());
-    } else {
-        const defPrj = getProjectByName(defaultProjectName);
-        if (defPrj) {
-            compileBufferInProject(defPrj, vscode.window.activeTextEditor.document.uri.toString(), vscode.window.activeTextEditor.document.getText());
-        } else {
-            const list = projects.map(project => ({ label: project.name, description: project.rootDir }));
-            list.sort((a, b) => a.label.localeCompare(b.label));
+    const filePath = vscode.window.activeTextEditor.document.uri.fsPath;
+    const uri = vscode.window.activeTextEditor.document.uri.toString();
+    const text = vscode.window.activeTextEditor.document.getText();
 
-            const quickPick = vscode.window.createQuickPick();
-            quickPick.canSelectMany = false;
-            quickPick.title = "Choose project to compile buffer:";
-            quickPick.items = list;
-            quickPick.onDidChangeSelection(args => {
-                quickPick.hide();
-                compileBufferInProject(getProjectByName(args[0].label), vscode.window.activeTextEditor.document.uri.toString(), vscode.window.activeTextEditor.document.getText());
-            });
-            quickPick.show();
-        }
+    if (projects.length == 1) {
+        compileBufferInProject(projects[0], uri, text);
+        return;
     }
+
+    // Auto-detect project from file path; most specific match (longest rootDir) wins
+    const detectedProject = getProject(filePath);
+    if (detectedProject) {
+        outputChannel.info(`Check syntax: auto-selected project '${detectedProject.name}' based on file path`);
+        compileBufferInProject(detectedProject, uri, text);
+        return;
+    }
+
+    // No project detected from file path - prompt user to select manually
+    const list = projects.map(project => ({ label: project.name, description: project.rootDir }));
+    list.sort((a, b) => a.label.localeCompare(b.label));
+
+    const quickPick = vscode.window.createQuickPick();
+    quickPick.canSelectMany = false;
+    quickPick.title = "Choose project to compile buffer:";
+    quickPick.items = list;
+    quickPick.onDidChangeSelection(args => {
+        quickPick.hide();
+        compileBufferInProject(getProjectByName(args[0].label), uri, text);
+    });
+    quickPick.show();
 }
 
 function compileBufferInProject(project: OpenEdgeProjectConfig, bufferUri: string, buffer: string) {
@@ -1093,7 +1105,6 @@ function parseOpenEdgeConfig(cfg: OpenEdgeConfig): ProfileConfig {
 
 function readGlobalOpenEdgeRuntimes() {
     buildMode = vscode.workspace.getConfiguration('abl').get('buildMode', 1);
-    defaultProjectName = vscode.workspace.getConfiguration('abl').get('defaultProject');
     langServDebug = vscode.workspace.getConfiguration('abl').get('langServerDebug');
     oeRuntimes = vscode.workspace.getConfiguration('abl.configuration').get<Array<any>>('runtimes');
 
